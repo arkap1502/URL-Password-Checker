@@ -1,6 +1,6 @@
 # Sentinel AI — Advanced URL Threat Scanner
 
-Sentinel AI is a browser-based security analysis tool that evaluates URLs using a deterministic, client-side heuristic engine. It is designed as a lightweight teaching and triage tool for identifying suspicious URL patterns before a user visits a page.
+Sentinel AI is a browser-based security analysis tool that evaluates URLs using a deterministic, client-side heuristic engine. It is designed as a lightweight teaching and triage tool for identifying suspicious URL patterns before a user visits a page. It also includes a password-strength analyzer and a live QR-code scanner that feeds decoded URLs straight into the threat engine.
 
 > **Important:** Sentinel AI performs URL-structure analysis only. It does not fetch or execute the target webpage, does not use a live machine-learning model, and is not a replacement for maintained threat-intelligence services.
 
@@ -76,6 +76,25 @@ The password analyzer:
 
 The password value is processed locally in the browser and is not persisted, logged, or sent to a server.
 
+## Live QR Scanner
+
+Sentinel AI includes a live QR-code scanning section.
+
+It supports two input modes, both decoded 100% in the browser:
+
+- **Live camera scan** — point the device camera at a QR code; decoding runs in the tab via the `html5-qrcode` library.
+- **Image upload fallback** — upload a photo/screenshot of a QR code (useful on desktops with no camera, or when the page is opened via `file://` and the browser blocks camera access).
+
+The QR scanner:
+
+- Shows a live camera viewport with start/stop controls.
+- Lists available cameras in a switcher dropdown when more than one is detected.
+- Displays decode status and friendly errors (permission denied, no camera found, camera busy, no QR in image).
+- Shows the decoded text with a **URL detected** / **Text** badge.
+- Offers a **Scan URL →** button when the decoded content looks like a URL, which fills the URL bar and runs the full threat-engine analysis.
+- Provides copy and clear controls.
+- Auto-stops the camera when the tab is hidden.
+
 ## Privacy
 
 Sentinel AI is designed around client-side processing.
@@ -83,6 +102,7 @@ Sentinel AI is designed around client-side processing.
 - No URL is sent to a backend by the scanner.
 - URL checks run inside the browser tab.
 - Password analysis also runs locally.
+- QR decoding (camera and image upload) also runs locally; camera frames never leave the tab.
 - No live page content is fetched by the URL scanner.
 - Scan history exists only in the current page session.
 - The generated report can be copied manually by the user.
@@ -117,6 +137,20 @@ Risk score (0–100)
 
 The score is calculated by adding the weighted points from triggered rules and capping the final result at 100.
 
+```text
+QR code (camera or image)
+        │
+        ▼
+In-browser QR decode (html5-qrcode)
+        │
+        ▼
+Decoded text ── URL? ──yes──▶ URL Threat Scanner (flow above)
+        │
+        no
+        ▼
+   Display as text
+```
+
 ## Example Signals
 
 The scanner can identify patterns such as:
@@ -148,6 +182,9 @@ The application uses a dark cybersecurity/HUD-style interface with:
 - Copy-report functionality
 - Example URLs for testing
 - Password visibility controls
+- Live QR camera viewport with start/stop and camera switcher
+- QR image-upload fallback with status messages
+- QR-to-URL handoff (`Scan URL →`) into the threat engine
 
 ## Technology Stack
 
@@ -157,9 +194,13 @@ The application uses a dark cybersecurity/HUD-style interface with:
 - JavaScript
 - SVG
 - Browser Clipboard API
+- Browser Media APIs (`getUserMedia` for the QR camera)
 - Google Fonts:
   - Inter
   - JetBrains Mono
+
+### Third-party CDN
+- `html5-qrcode` (via unpkg) — in-browser QR decoding for the live camera and image-upload scanner. Requires internet access; all decoding still happens locally.
 
 ### Architecture
 - Single-page client-side application
@@ -201,6 +242,8 @@ in a modern browser.
 
 For VS Code, you can also use the **Live Server** extension and open `index.html` through the local development server.
 
+> **Camera note:** browsers only allow camera access in secure contexts (HTTPS or `localhost`). If you open `index.html` directly via `file://` and the camera fails, run it through Live Server (or any `localhost` server) and allow the permission prompt. The QR image-upload option works without a camera. Internet access is needed once to load the `html5-qrcode` CDN script.
+
 ## Usage
 
 ### Scan a URL
@@ -239,6 +282,15 @@ The interface includes example URLs for testing different detection patterns, in
 4. Use **SHOW/HIDE** if needed.
 5. Clear the field when finished.
 
+### Scan a QR Code
+
+1. Scroll to the **Live QR Scan** section.
+2. Either:
+   - Click **Start camera →**, allow the permission prompt, and point the camera at a QR code, or
+   - Click **Upload image** and choose a photo/screenshot of a QR code.
+3. Review the decoded text and its **URL detected** / **Text** badge.
+4. If it is a URL, click **Scan URL →** to run it through the URL threat scanner.
+
 ## Risk Scoring
 
 The URL scanner uses weighted heuristic signals.
@@ -264,6 +316,7 @@ Sentinel AI intentionally has a limited scope.
 - Heuristic results can produce false positives or false negatives.
 - A low-risk result does not guarantee that a website is safe.
 - A high-risk result should be treated as a warning for further investigation.
+- The QR camera requires a secure context (HTTPS or `localhost`), a granted camera permission, and internet access for the `html5-qrcode` CDN; blurry or cropped QR images may fail to decode.
 
 ## Responsible Use
 
@@ -324,4 +377,4 @@ Cybersecurity / Computer Science Project
 
 ### Project Highlights
 
-**Sentinel AI** combines URL threat heuristics, password-strength analysis, a responsive cybersecurity interface, and privacy-focused client-side processing into a single lightweight web application.
+**Sentinel AI** combines URL threat heuristics, password-strength analysis, live QR-code scanning with URL handoff, a responsive cybersecurity interface, and privacy-focused client-side processing into a single lightweight web application.
